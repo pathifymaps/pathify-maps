@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>World Maps</title>
+  <link rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: Arial, sans-serif;
+      background: #f4f7fb; color: #172033;
+    }
+    header {
+      padding: 15px; background: #123c72; color: white;
+    }
+    header h2 { margin: 0 0 5px; }
+    .panel { padding: 12px; }
+    input, button {
+      width: 100%; padding: 12px; margin: 5px 0;
+      border-radius: 9px; font-size: 15px;
+    }
+    input { border: 1px solid #ccd5e0; }
+    button {
+      border: 0; background: #1769e0; color: white;
+      font-weight: bold; cursor: pointer;
+    }
+    button.secondary { background: #263b55; }
+    #map { height: 55vh; min-height: 340px; }
+    #status { font-size: 14px; padding: 8px 0; }
+    footer { font-size: 12px; padding: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>🌍 Pathify Maps</h2>
+    Eksploro botën.
+  </header>
+
+  <div class="panel">
+    <input id="search" placeholder="Kërko qytet ose vend...">
+    <button onclick="searchPlace()">🔎 Kërko vendin</button>
+
+    <input id="from" placeholder="Nisja, p.sh. Tirana">
+    <input id="to" placeholder="Destinacioni, p.sh. Durres">
+    <button onclick="makeRoute()">🧭 Gjej rrugën</button>
+    <button class="secondary" onclick="locateMe()">
+      📍 Gjej vendndodhjen time
+    </button>
+    <div id="status" role="status">Gati për eksplorim!</div>
+  </div>
+
+  <div id="map"></div>
+  <footer>© OpenStreetMap contributors</footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([20, 0], 2);
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let markers = [];
+    let routeLayer;
+
+    function status(message) {
+      document.getElementById('status').textContent = message;
+    }
+
+    async function geocode(place) {
+      const url = new URL('https://nominatim.openstreetmap.org/search');
+      url.searchParams.set('q', place);
+      url.searchParams.set('format', 'jsonv2');
+      url.searchParams.set('limit', '1');
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Kërkimi dështoi.');
+      const results = await response.json();
+      if (!results.length) throw new Error('Vendi nuk u gjet.');
+      return [Number(results[0].lat), Number(results[0].lon)];
+    }
+
+    function clearMarkers() {
+      markers.forEach(marker => map.removeLayer(marker));
+      markers = [];
+    }
+
+    async function searchPlace() {
+      const query = document.getElementById('search').value.trim();
+      if (!query) return status('Shkruaj një vend për të kërkuar.');
+
+      status('Po kërkoj...');
+      try {
+        const point = await geocode(query);
+        clearMarkers();
+        markers.push(L.marker(point).addTo(map).bindPopup(query).openPopup());
+        map.setView(point, 14);
+        status('Vendi u gjet!');
+      } catch (error) {
+        status(error.message || 'Gabim gjatë kërkimit.');
+      }
+    }
+
+    async function makeRoute() {
+      const from = document.getElementById('from').value.trim();
+      const to = document.getElementById('to').value.trim();
+      if (!from || !to) return status('Shkruaj nisjen dhe destinacionin.');
+
+      status('Po llogaris itinerarin...');
+      try {
+        const start = await geocode(from);
+        const end = await geocode(to);
+
+        const url = 'https://router.project-osrm.org/route/v1/driving/'
+          + start[1] + ',' + start[0] + ';'
+          + end[1] + ',' + end[0]
+          + '?overview=full&geometries=geojson';
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Shërbimi i rrugëve nuk u përgjigj.');
+        const data = await response.json();
+        if (data.code !== 'Ok' || !data.routes.length) {
+          throw new Error('Nuk u gjet itinerar me makinë.');
+        }
+
+        if (routeLayer) map.removeLayer(routeLayer);
+        clearMarkers();
+
+        routeLayer = L.geoJSON(data.routes[0].geometry, {
+          style: { color: '#1769e0', weight: 5 }
+        }).addTo(map);
+
+        markers.push(L.marker(start).addTo(map).bindPopup('Nisja'));
+        markers.push(L.marker(end).addTo(map).bindPopup('Destinacioni'));
+        map.fitBounds(routeLayer.getBounds(), { padding: [25, 25] });
+
+        const km = (data.routes[0].distance / 1000).toFixed(1);
+        const mins = Math.round(data.routes[0].duration / 60);
+        status('Distanca: ' + km + ' km · Koha e parashikuar: '
+          + mins + ' min. Pa trafik në kohë reale.');
+      } catch (error) {
+        status(error.message || 'Nuk u arrit të krijohej rruga.');
+      }
+    }
+
+    function locateMe() {
+      if (!navigator.geolocation) {
+        return status('Shfletuesi nuk mbështet GPS.');
+      }
+      status('Po kërkoj vendndodhjen...');
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const point = [
+            position.coords.latitude,
+            position.coords.longitude
+          ];
+          clearMarkers();
+          markers.push(L.marker(point).addTo(map)
+            .bindPopup('Vendndodhja jote').openPopup());
+          map.setView(point, 16);
+          status('Vendndodhja u gjet.');
+        },
+        () => status('Lejo GPS-in dhe provo përsëri.'),
+        { enableHighAccuracy: true, timeout: 15000 }
+      );
+    }
+  </script>
+</body>
+</html>
