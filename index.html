@@ -3,171 +3,939 @@
 <html lang="sq">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>World Maps</title>
-  <link rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+
+  <title>WorldMap — Explore the World</title>
+
+  <!-- Harta -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  >
+
+  <!-- Dizajni ynë -->
   <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; font-family: Arial, sans-serif;
-      background: #f4f7fb; color: #172033;
-    }
-    header {
-      padding: 15px; background: #123c72; color: white;
-    }
-    header h2 { margin: 0 0 5px; }
-    .panel { padding: 12px; }
-    input, button {
-      width: 100%; padding: 12px; margin: 5px 0;
-      border-radius: 9px; font-size: 15px;
-    }
-    input { border: 1px solid #ccd5e0; }
-    button {
-      border: 0; background: #1769e0; color: white;
-      font-weight: bold; cursor: pointer;
-    }
-    button.secondary { background: #263b55; }
-    #map { height: 55vh; min-height: 340px; }
-    #status { font-size: 14px; padding: 8px 0; }
-    footer { font-size: 12px; padding: 8px; }
+    
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --primary: #1677ff;
+  --primary-dark: #075bd8;
+  --text: #172033;
+  --muted: #748094;
+  --border: #e7ebf2;
+  --surface: #ffffff;
+  --background: #f5f7fb;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text);
+  background: var(--background);
+}
+
+body {
+  overflow: hidden;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+/* SHIRITI I SIPËRM */
+
+.topbar {
+  min-height: 60px;
+  padding: 10px 17px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.97);
+  z-index: 500;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.7px;
+}
+
+.brand-icon {
+  font-size: 25px;
+}
+
+.brand-highlight {
+  color: var(--primary);
+}
+
+.icon-button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #f5f8ff;
+  color: var(--primary);
+  font-size: 26px;
+  transition: 0.2s;
+}
+
+.icon-button:active {
+  transform: scale(0.93);
+}
+
+/* KËRKIMI */
+
+.search-area {
+  padding: 17px 16px 14px;
+  background: var(--surface);
+  z-index: 400;
+}
+
+.search-area h1 {
+  font-size: clamp(24px, 6vw, 31px);
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 5px;
+}
+
+.search-area p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 5px 6px 5px 14px;
+  background: #f4f7fc;
+  border: 1px solid #e5ebf5;
+  border-radius: 17px;
+  transition: 0.2s;
+}
+
+.search-box:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.09);
+}
+
+.search-box > span {
+  font-size: 25px;
+  color: var(--muted);
+}
+
+.search-box input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.search-box input::placeholder {
+  color: #98a2b3;
+}
+
+.search-box button {
+  border: none;
+  border-radius: 12px;
+  padding: 11px 15px;
+  background: var(--primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background 0.2s;
+}
+
+.search-box button:active {
+  background: var(--primary-dark);
+}
+
+/* KATEGORITË */
+
+.categories {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 13px 0 1px;
+  scrollbar-width: none;
+}
+
+.categories::-webkit-scrollbar {
+  display: none;
+}
+
+.category {
+  flex-shrink: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: white;
+  color: #596579;
+  font-size: 12px;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.category.active {
+  color: var(--primary);
+  border-color: #c8dcff;
+  background: #edf4ff;
+}
+
+.category:active {
+  transform: scale(0.96);
+}
+
+/* HARTA */
+
+.map-container {
+  position: relative;
+  flex: 1;
+  min-height: 120px;
+  background: #e8edf2;
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background: #e8edf2;
+}
+
+/* KONTROLLET E HARTËS */
+
+.map-control {
+  position: absolute;
+  right: 15px;
+  bottom: 18px;
+  z-index: 400;
+  width: 47px;
+  height: 47px;
+  border: 1px solid rgba(225, 230, 239, 0.9);
+  border-radius: 16px;
+  background: white;
+  color: var(--primary);
+  font-size: 28px;
+  box-shadow: 0 4px 18px rgba(25, 45, 80, 0.15);
+}
+
+.map-control:active {
+  transform: scale(0.94);
+}
+
+.map-status {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 400;
+  padding: 9px 13px;
+  border: 1px solid rgba(230, 235, 243, 0.9);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #596579;
+  font-size: 11px;
+  box-shadow: 0 3px 12px rgba(20, 40, 70, 0.08);
+  white-space: nowrap;
+}
+
+/* KARTELA E VENDEVE */
+
+.place-card {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 450;
+  padding: 18px;
+  padding-right: 43px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 8px 35px rgba(20, 35, 65, 0.18);
+  animation: slide-up 0.22s ease-out;
+}
+
+.place-card h3 {
+  font-size: 17px;
+  margin-bottom: 6px;
+}
+
+.place-card p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.close-card {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 10px;
+  background: #f0f3f8;
+  color: #586174;
+  font-size: 22px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* MENUJA E POSHTME */
+
+.bottom-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  min-height: 66px;
+  padding: 5px 8px max(5px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: white;
+  z-index: 500;
+}
+
+.nav-item {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: #8993a5;
+}
+
+.nav-item span {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.nav-item small {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.nav-item.selected {
+  color: var(--primary);
+}
+
+/* PAMJA NË EKRANE MË TË MËDHA */
+
+@media (min-width: 700px) {
+  .app {
+    max-width: 1100px;
+    margin: auto;
+    height: 100dvh;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
+
+  .search-area {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+
+  .topbar {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+
+  .bottom-nav {
+    min-height: 72px;
+  }
+}
+
+/* RESPEKTO REDUKTIMIN E ANIMACIONEVE */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
   </style>
 </head>
+
 <body>
-  <header>
-    <h2>🌍 Pathify Maps</h2>
-    Eksploro botën.
-  </header>
+  <div class="app">
 
-  <div class="panel">
-    <input id="search" placeholder="Kërko qytet ose vend...">
-    <button onclick="searchPlace()">🔎 Kërko vendin</button>
+    <!-- Shiriti i sipërm -->
+    <header class="topbar">
+      <a class="brand" href="#">
+        <span class="brand-icon">🌍</span>
+        <span>World<span class="brand-highlight">Map</span></span>
+      </a>
 
-    <input id="from" placeholder="Nisja, p.sh. Tirana">
-    <input id="to" placeholder="Destinacioni, p.sh. Durres">
-    <button onclick="makeRoute()">🧭 Gjej rrugën</button>
-    <button class="secondary" onclick="locateMe()">
-      📍 Gjej vendndodhjen time
-    </button>
-    <div id="status" role="status">Gati për eksplorim!</div>
+      <button id="locateBtn" class="icon-button"
+        aria-label="Gjej vendndodhjen time">
+        ◎
+      </button>
+    </header>
+
+    <!-- Kërkimi -->
+    <section class="search-area">
+      <h1>Explore the world.</h1>
+      <p>Gjej vende të reja, kudo në planet.</p>
+
+      <form id="searchForm" class="search-box">
+        <span>⌕</span>
+        <input
+          id="searchInput"
+          type="search"
+          placeholder="Kërko qytet, vend ose adresë..."
+          autocomplete="off"
+        >
+        <button type="submit">Gjej</button>
+      </form>
+
+      <div class="categories">
+        <button class="category active" data-type="all">🌐 Të gjitha</button>
+        <button class="category" data-type="food">🍽️ Ushqim</button>
+        <button class="category" data-type="hotel">🏨 Hotele</button>
+        <button class="category" data-type="tourism">📸 Turizëm</button>
+      </div>
+    </section>
+
+    <!-- Harta interaktive -->
+    <main class="map-container">
+      <div id="map"></div>
+
+      <div class="map-status" id="mapStatus">
+        🌍 Po përgatitet harta...
+      </div>
+
+      <button id="resetBtn" class="map-control"
+        aria-label="Rivendos pamjen e hartës">
+        ⌖
+      </button>
+
+      <div id="placeCard" class="place-card hidden">
+        <button id="closeCard" class="close-card"
+          aria-label="Mbyll">×</button>
+        <div id="placeDetails"></div>
+      </div>
+    </main>
+
+    <!-- Paneli i poshtëm -->
+    <nav class="bottom-nav">
+      <button class="nav-item selected" data-page="map">
+        <span>🌍</span>
+        <small>Harta</small>
+      </button>
+
+      <button class="nav-item" data-page="explore">
+        <span>🧭</span>
+        <small>Eksploro</small>
+      </button>
+
+      <button class="nav-item" data-page="saved">
+        <span>♡</span>
+        <small>Të ruajtura</small>
+      </button>
+    </nav>
+
   </div>
 
-  <div id="map"></div>
-  <footer>© OpenStreetMap contributors</footer>
-
+  <!-- Biblioteka e hartës -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <script>
-    const map = L.map('map').setView([20, 0], 2);
+(() => {
+  "use strict";
 
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+  const $ = (id) => document.getElementById(id);
 
-    let markers = [];
-    let routeLayer;
+  const mapStatus = $("mapStatus");
+  const searchForm = $("searchForm");
+  const searchInput = $("searchInput");
+  const locateBtn = $("locateBtn");
+  const resetBtn = $("resetBtn");
+  const placeCard = $("placeCard");
+  const placeDetails = $("placeDetails");
+  const closeCard = $("closeCard");
 
-    function status(message) {
-      document.getElementById('status').textContent = message;
+  if (typeof L === "undefined") {
+    mapStatus.textContent = "Harta nuk u ngarkua. Kontrollo internetin.";
+    return;
+  }
+
+  // KRIJO HARTËN
+  const map = L.map("map", {
+    zoomControl: false,
+    zoomAnimation: true,
+    fadeAnimation: true,
+    markerZoomAnimation: true,
+    preferCanvas: true,
+    worldCopyJump: true
+  }).setView([41.3275, 19.8187], 13);
+
+  // Hartë e pastër me rrugë, emra dhe zona
+  const baseMap = L.tileLayer(
+    "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    {
+      subdomains: "abcd",
+      maxZoom: 20,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      keepBuffer: 4,
+      updateWhenZooming: false,
+      updateWhenIdle: true,
+      crossOrigin: true
     }
+  ).addTo(map);
 
-    async function geocode(place) {
-      const url = new URL('https://nominatim.openstreetmap.org/search');
-      url.searchParams.set('q', place);
-      url.searchParams.set('format', 'jsonv2');
-      url.searchParams.set('limit', '1');
+  baseMap.on("loading", () => {
+    mapStatus.textContent = "Po ngarkohen detajet e hartës…";
+    mapStatus.style.display = "block";
+  });
 
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Kërkimi dështoi.');
-      const results = await response.json();
-      if (!results.length) throw new Error('Vendi nuk u gjet.');
-      return [Number(results[0].lat), Number(results[0].lon)];
+  baseMap.on("load", () => {
+    mapStatus.textContent = "Harta është gati";
+    setTimeout(() => {
+      mapStatus.style.display = "none";
+    }, 1300);
+  });
+
+  baseMap.on("tileerror", () => {
+    mapStatus.textContent =
+      "Disa pjesë nuk u ngarkuan. Kontrollo internetin.";
+    mapStatus.style.display = "block";
+  });
+
+  // KONTROLLET E ZOOM-IT
+  L.control.zoom({
+    position: "bottomright",
+    zoomInTitle: "Zmadho",
+    zoomOutTitle: "Zvogëlo"
+  }).addTo(map);
+
+  // IKONA E PERSONALIZUAR
+  function makeIcon(emoji, color = "#1677ff") {
+    return L.divIcon({
+      className: "worldmap-marker",
+      html: `
+        <div style="
+          width:38px;
+          height:38px;
+          border-radius:14px;
+          background:${color};
+          border:3px solid white;
+          box-shadow:0 4px 14px #15243b35;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-size:18px;
+        ">${emoji}</div>
+      `,
+      iconSize: [38, 38],
+      iconAnchor: [19, 19]
+    });
+  }
+
+  // VENDE DEMONSTRUESE RRETH TIRANËS
+  // Mund t'i zëvendësosh më vonë me rezultate reale.
+  const places = [
+    {
+      name: "Sheshi Skënderbej",
+      type: "tourism",
+      emoji: "🏛️",
+      coords: [41.3275, 19.8187],
+      description: "Sheshi kryesor i Tiranës."
+    },
+    {
+      name: "Parku i Madh",
+      type: "tourism",
+      emoji: "🌳",
+      coords: [41.3112, 19.8219],
+      description: "Park dhe liqen për shëtitje."
+    },
+    {
+      name: "Pazari i Ri",
+      type: "food",
+      emoji: "🍽️",
+      coords: [41.3296, 19.8231],
+      description: "Zonë me treg, restorante dhe kafene."
+    },
+    {
+      name: "Blloku",
+      type: "food",
+      emoji: "☕",
+      coords: [41.3199, 19.8177],
+      description: "Zonë me kafene dhe restorante."
+    },
+    {
+      name: "Zona e hoteleve",
+      type: "hotel",
+      emoji: "🏨",
+      coords: [41.3255, 19.8125],
+      description: "Zonë orientuese për kërkim hotelesh."
     }
+  ];
 
-    function clearMarkers() {
-      markers.forEach(marker => map.removeLayer(marker));
-      markers = [];
-    }
+  const placesLayer = L.layerGroup().addTo(map);
+  let userMarker = null;
+  let routeLayer = null;
+  let searchMarker = null;
+  let currentCategory = "all";
+  let searchRequest = 0;
 
-    async function searchPlace() {
-      const query = document.getElementById('search').value.trim();
-      if (!query) return status('Shkruaj një vend për të kërkuar.');
+  function showPlace(place) {
+    placeDetails.innerHTML = "";
 
-      status('Po kërkoj...');
-      try {
-        const point = await geocode(query);
-        clearMarkers();
-        markers.push(L.marker(point).addTo(map).bindPopup(query).openPopup());
-        map.setView(point, 14);
-        status('Vendi u gjet!');
-      } catch (error) {
-        status(error.message || 'Gabim gjatë kërkimit.');
+    const title = document.createElement("h3");
+    title.textContent = place.name;
+
+    const description = document.createElement("p");
+    description.textContent =
+      place.description || "Vendndodhje në hartë.";
+
+    placeDetails.append(title, description);
+    placeCard.classList.remove("hidden");
+  }
+
+  function renderPlaces() {
+    placesLayer.clearLayers();
+
+    places.forEach((place) => {
+      if (
+        currentCategory !== "all" &&
+        place.type !== currentCategory
+      ) {
+        return;
       }
+
+      const marker = L.marker(place.coords, {
+        icon: makeIcon(place.emoji)
+      });
+
+      marker.bindTooltip(place.name, {
+        direction: "top",
+        offset: [0, -18]
+      });
+
+      marker.on("click", () => showPlace(place));
+      marker.addTo(placesLayer);
+    });
+  }
+
+  renderPlaces();
+
+  // KËRKIM REAL I QYTETEVE DHE ADRESAVE
+  // Kërkimi bëhet kur shtypet butoni, jo në çdo tast.
+  searchForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const query = searchInput.value.trim();
+    if (!query) {
+      searchInput.focus();
+      return;
     }
 
-    async function makeRoute() {
-      const from = document.getElementById('from').value.trim();
-      const to = document.getElementById('to').value.trim();
-      if (!from || !to) return status('Shkruaj nisjen dhe destinacionin.');
+    const requestId = ++searchRequest;
+    mapStatus.textContent = "Po kërkoj: " + query;
+    mapStatus.style.display = "block";
 
-      status('Po llogaris itinerarin...');
-      try {
-        const start = await geocode(from);
-        const end = await geocode(to);
+    try {
+      const url =
+        "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=" +
+        encodeURIComponent(query);
 
-        const url = 'https://router.project-osrm.org/route/v1/driving/'
-          + start[1] + ',' + start[0] + ';'
-          + end[1] + ',' + end[0]
-          + '?overview=full&geometries=geojson';
+      const response = await fetch(url, {
+        headers: { Accept: "application/json" }
+      });
 
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Shërbimi i rrugëve nuk u përgjigj.');
-        const data = await response.json();
-        if (data.code !== 'Ok' || !data.routes.length) {
-          throw new Error('Nuk u gjet itinerar me makinë.');
+      if (!response.ok) {
+        throw new Error("Kërkimi nuk është i disponueshëm.");
+      }
+
+      const results = await response.json();
+
+      if (requestId !== searchRequest) return;
+
+      if (!results.length) {
+        mapStatus.textContent = "Nuk u gjet asnjë vend.";
+        return;
+      }
+
+      const result = results[0];
+      const lat = Number(result.lat);
+      const lon = Number(result.lon);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        throw new Error("Koordinatat nuk janë të vlefshme.");
+      }
+
+      map.flyTo([lat, lon], 15, {
+        animate: true,
+        duration: 1.2
+      });
+
+      if (searchMarker) map.removeLayer(searchMarker);
+
+      searchMarker = L.marker([lat, lon], {
+        icon: makeIcon("📍", "#ef4444")
+      }).addTo(map);
+
+      searchMarker.bindPopup(
+        L.popup().setContent(
+          document.createTextNode(result.display_name)
+        )
+      ).openPopup();
+
+      showPlace({
+        name: result.name || query,
+        description: result.display_name
+      });
+
+      mapStatus.textContent = "U gjet vendndodhja!";
+      setTimeout(() => {
+        if (requestId === searchRequest) {
+          mapStatus.style.display = "none";
         }
+      }, 1800);
 
-        if (routeLayer) map.removeLayer(routeLayer);
-        clearMarkers();
+    } catch (error) {
+      if (requestId !== searchRequest) return;
+      mapStatus.textContent =
+        "Kërkimi dështoi. Kontrollo internetin dhe provo përsëri.";
+      mapStatus.style.display = "block";
+    }
+  });
 
-        routeLayer = L.geoJSON(data.routes[0].geometry, {
-          style: { color: '#1769e0', weight: 5 }
+  // GPS — KËRKON LEJE NGA PËRDORUESI
+  locateBtn.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      mapStatus.textContent = "Pajisja nuk mbështet GPS.";
+      mapStatus.style.display = "block";
+      return;
+    }
+
+    mapStatus.textContent = "Po gjej vendndodhjen tënde…";
+    mapStatus.style.display = "block";
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        map.flyTo([lat, lon], 16, {
+          animate: true,
+          duration: 1.2
+        });
+
+        if (userMarker) map.removeLayer(userMarker);
+
+        userMarker = L.circleMarker([lat, lon], {
+          radius: 9,
+          color: "#ffffff",
+          weight: 4,
+          fillColor: "#1677ff",
+          fillOpacity: 1
         }).addTo(map);
 
-        markers.push(L.marker(start).addTo(map).bindPopup('Nisja'));
-        markers.push(L.marker(end).addTo(map).bindPopup('Destinacioni'));
-        map.fitBounds(routeLayer.getBounds(), { padding: [25, 25] });
+        userMarker.bindTooltip("Je këtu").openTooltip();
 
-        const km = (data.routes[0].distance / 1000).toFixed(1);
-        const mins = Math.round(data.routes[0].duration / 60);
-        status('Distanca: ' + km + ' km · Koha e parashikuar: '
-          + mins + ' min. Pa trafik në kohë reale.');
-      } catch (error) {
-        status(error.message || 'Nuk u arrit të krijohej rruga.');
-      }
-    }
+        mapStatus.textContent = "Vendndodhja u gjet!";
+        setTimeout(() => {
+          mapStatus.style.display = "none";
+        }, 1800);
+      },
+      (error) => {
+        const messages = {
+          1: "Lejo aksesin te vendndodhja.",
+          2: "GPS nuk mundi të gjejë vendndodhjen.",
+          3: "Kërkesa për GPS mori shumë kohë."
+        };
 
-    function locateMe() {
-      if (!navigator.geolocation) {
-        return status('Shfletuesi nuk mbështet GPS.');
+        mapStatus.textContent =
+          messages[error.code] || "GPS nuk është i disponueshëm.";
+        mapStatus.style.display = "block";
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 10000
       }
-      status('Po kërkoj vendndodhjen...');
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          const point = [
-            position.coords.latitude,
-            position.coords.longitude
-          ];
-          clearMarkers();
-          markers.push(L.marker(point).addTo(map)
-            .bindPopup('Vendndodhja jote').openPopup());
-          map.setView(point, 16);
-          status('Vendndodhja u gjet.');
-        },
-        () => status('Lejo GPS-in dhe provo përsëri.'),
-        { enableHighAccuracy: true, timeout: 15000 }
-      );
+    );
+  });
+
+  // RIVENDOS HARTËN
+  resetBtn.addEventListener("click", () => {
+    map.flyTo([41.3275, 19.8187], 13, {
+      animate: true,
+      duration: 1
+    });
+    placeCard.classList.add("hidden");
+  });
+
+  // FILTRIMI I KATEGORIVE
+  document.querySelectorAll(".category").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll(".category").forEach((item) => {
+        item.classList.remove("active");
+      });
+
+      button.classList.add("active");
+      currentCategory = button.dataset.type;
+      renderPlaces();
+    });
+  });
+
+  closeCard.addEventListener("click", () => {
+    placeCard.classList.add("hidden");
+  });
+
+  // MENUJA E POSHTME
+  document.querySelectorAll(".nav-item").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll(".nav-item").forEach((item) => {
+        item.classList.remove("selected");
+      });
+
+      button.classList.add("selected");
+
+      const page = button.dataset.page;
+
+      if (page === "map") {
+        map.flyTo([41.3275, 19.8187], 13);
+      } else if (page === "explore") {
+        map.fitBounds(placesLayer.getBounds(), {
+          padding: [35, 35],
+          maxZoom: 14
+        });
+      } else if (page === "saved") {
+        mapStatus.textContent =
+          "Vendet e ruajtura do të shtohen në versionin tjetër.";
+        mapStatus.style.display = "block";
+      }
+    });
+  });
+
+  // RRUGË DREJTIMI: nis nga GPS, nëse është i disponueshëm.
+  // Për momentin kërkohet një destinacion përmes kërkimit.
+  // OSRM është shërbim demonstrues publik, jo shërbim i garantuar.
+  async function drawRoute(start, end) {
+    if (routeLayer) map.removeLayer(routeLayer);
+
+    mapStatus.textContent = "Po llogaris itinerarin…";
+    mapStatus.style.display = "block";
+
+    try {
+      const url =
+        "https://router.project-osrm.org/route/v1/driving/" +
+        `${start[1]},${start[0]};${end[1]},${end[0]}` +
+        "?overview=full&geometries=geojson";
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Rruga nuk u gjet.");
+
+      const data = await response.json();
+
+      if (!data.routes || !data.routes.length) {
+        throw new Error("Nuk ka itinerar të disponueshëm.");
+      }
+
+      routeLayer = L.geoJSON(data.routes[0].geometry, {
+        style: {
+          color: "#1677ff",
+          weight: 5,
+          opacity: 0.9,
+          lineCap: "round",
+          lineJoin: "round"
+        }
+      }).addTo(map);
+
+      map.fitBounds(routeLayer.getBounds(), {
+        padding: [35, 35]
+      });
+
+      const km = (data.routes[0].distance / 1000).toFixed(1);
+      const minutes = Math.round(data.routes[0].duration / 60);
+
+      mapStatus.textContent =
+        `Itinerari: ${km} km · rreth ${minutes} min`;
+
+    } catch (error) {
+      mapStatus.textContent =
+        "Itinerari nuk u ngarkua. Provo përsëri më vonë.";
     }
+  }
+
+  // E ekspozojmë funksionin për ta lidhur me butonat e itinerarit.
+  window.WorldMap = {
+    map,
+    places,
+    drawRoute
+  };
+
+  map.whenReady(() => {
+    setTimeout(() => map.invalidateSize(), 150);
+  });
+
+  window.addEventListener("resize", () => {
+    map.invalidateSize({ pan: false });
+  });
+})();
+
+  <script>
+    // Funksionet e hartës do të shtohen te pjesa 3.
   </script>
 </body>
 </html>
